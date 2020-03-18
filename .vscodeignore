@@ -1,4 +1,6 @@
+.history
 .vscode/**/*
+.git/
 .gitignore
 .travis.yml
 appveyor.yml
