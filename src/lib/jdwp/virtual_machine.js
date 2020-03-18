@@ -109,7 +109,7 @@ class VirtualMachine extends Base {
     ByteBuffer.setFrameIDSize(idSizes.frameIDSize);
 
     this.capabilities = await this.send(new Capabilities());
-    this.capabilitiesNew = await this.send(new CapabilitiesNew());
+    //this.capabilitiesNew = await this.send(new CapabilitiesNew());
 
     let er = this.internalEventRequestManager.createClassPrepareRequest();
     er.suspendPolicy = SuspendPolicy.NONE;

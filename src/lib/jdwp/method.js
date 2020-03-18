@@ -369,12 +369,12 @@ class ConcreteMethod extends Method {
       this.argSlotCount = vartab.argCnt;
       const variables = [];
       for (const slot of vartab.slots) {
-        if (!slot.name.startsWith('this$') && !slot.name === 'this') {
+        //if (!slot.name.startsWith('this$') && !slot.name === 'this') {
           const scopeStart = new Location(this.vm, this, slot.codeIndex);
           const scopeEnd = new Location(this.vm, this, slot.codeIndex + slot.length - 1);
           const variable = new LocalVariable(this.vm, this, slot.slot, scopeStart, scopeEnd, slot.name, slot.signature);
           variables.push(variable);
-        }
+        //}
       }
       return variables;
     } catch (err) {
@@ -398,12 +398,12 @@ class ConcreteMethod extends Method {
           this.argSlotCount = vartab.argCnt;
           this.variables = [];
           for (const slot of vartab.slots) {
-            if (!slot.name.startsWith('this$') && slot.name !== 'this') {
+            //if (!slot.name.startsWith('this$') && slot.name !== 'this') {
               const scopeStart = new Location(this.vm, this, slot.codeIndex);
               const scopeEnd = new Location(this.vm, this, slot.codeIndex + slot.length - 1);
               const variable = new LocalVariable(this.vm, this, slot.slot, scopeStart, scopeEnd, slot.name, slot.signature, slot.genericSignature);
               this.variables.push(variable);
-            }
+            //}
           }
         } catch (err) {
           if (err.name === 'ABSENT_INFORMATION') {
