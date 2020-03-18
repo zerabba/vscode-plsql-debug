@@ -1,0 +1,130 @@
+{
+	"name": "plsql-debug",
+	"displayName": "Plsql Debug",
+	"version": "1.0.0",
+	"icon": "images/plsql-debug-icon.png",
+	"publisher": "rbadertscher",
+	"description": "PLSQL Debug extension for VS Code.",
+	"author": {
+		"name": "ProConcept SA",
+		"email": "raphael.badertscher@proconcept.ch"
+	},
+	"license": "MIT",
+	"keywords": [
+		"multi-root ready"
+	],
+	"engines": {
+		"vscode": "^1.43.0"
+	},
+	"categories": [
+		"Debuggers"
+	],
+	"private": false,
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/zerabba/vscode-plsql-debug.git"
+	},
+	"bugs": {
+		"url": "https://github.com/zerabba/vscode-plsql-debug/issues"
+	},
+	"scripts": {
+		"prepublish": "tsc -p ./src",
+		"compile": "tsc -p ./src",
+		"tslint": "tslint ./src/**/*.ts",
+		"watch": "tsc -w -p ./src",
+		"test": "mocha -u tdd ./out/tests/",
+		"postinstall": "node ./node_modules/vscode/bin/install",
+		"package": "vsce package",
+		"publish": "vsce publish"
+	},
+	"dependencies": {
+		"@types/node": "10.12.12",
+		"await-notify": "1.0.1",
+		"long": "^4.0.0",
+		"net": "^1.0.2",
+		"pump": "^3.0.0",
+		"sdk-base": "^3.6.0",
+		"utility": "^1.16.3",
+		"vscode-debugadapter": "^1.39"
+	},
+	"devDependencies": {
+		"@types/mocha": "5.2.7",
+		"@types/node": "10.12.12",
+		"mocha": "6.2.0",
+		"tslint": "5.18.0",
+		"typescript": "3.5.3",
+		"vsce": "1.66.0",
+		"vscode": "1.1.36",
+		"vscode-debugadapter-testsupport": "1.40.2-pre.0"
+	},
+	"main": "./out/extension",
+	"activationEvents": [
+		"onDebug",
+		"onCommand:extension.plsql-debug.getProgramName"
+	],
+	"contributes": {
+		"breakpoints": [
+			{
+				"language": "plsql"
+			}
+		],
+		"debuggers": [
+			{
+				"type": "plsql",
+				"label": "Plsql Debug",
+				"program": "./out/debugAdapter.js",
+				"runtime": "node",
+				"configurationAttributes": {
+					"launch": {
+						"required": [
+							"program"
+						],
+						"properties": {
+							"program": {
+								"type": "string",
+								"description": "Absolute path to a plsql file.",
+								"default": "${file}"
+							},
+							"watchingSchemas": {
+								"type": "array",
+								"description": "List of schema to look after for breakpoints."
+							},
+							"socketPort": {
+								"type": "number",
+								"description": "The port number where the client will connect.",
+								"default": 4000
+							},
+							"trace": {
+								"type": "boolean",
+								"description": "Enable logging of the Debug Adapter Protocol.",
+								"default": true
+							}
+						}
+					}
+				},
+				"initialConfigurations": [
+					{
+						"type": "plsql",
+						"request": "launch",
+						"name": "PLSQL Debug",
+						"program": "${file}"
+					}
+				],
+				"configurationSnippets": [
+					{
+						"label": "Plsql Debug: Launch",
+						"description": "A new configuration for 'debugging' a user selected plsql file.",
+						"body": {
+							"type": "plsql",
+							"request": "launch",
+							"name": "PLSQL Debug",
+							"program": "^\"\\${file}\"",
+							"watchingSchemas": "[\"\"]",
+							"socketPort": "4000"
+						}
+					}
+				]
+			}
+		]
+	}
+}
