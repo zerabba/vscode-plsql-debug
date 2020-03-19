@@ -1,9 +1,9 @@
 {
 	"name": "plsql-debug",
 	"displayName": "Plsql Debug",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"icon": "images/plsql-debug-icon.png",
-	"publisher": "rbadertscher",
+	"publisher": "zerabba",
 	"description": "PLSQL Debug extension for VS Code.",
 	"author": {
 		"name": "ProConcept SA",
