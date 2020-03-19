@@ -92,8 +92,27 @@ export class PlsqlRuntime extends EventEmitter {
 				this.sendEvent('output', 'Debug ended...')
 				this.sendEvent('end');
 			  /*} else if(event.eventKind === 'CLASS_PREPARE') {
-				  console.log('CLASS_PREPARE: '+event.signature);
-			  } else if(event.eventKind === 'CLASS_UNLOAD') {*/
+				  console.log('CLASS_PREPARE: '+event.signature);*/
+			  } else if(event.eventKind === 'CLASS_UNLOAD') {
+				const signature = this.getSignature(event.signature);
+				const plsqlClazzFilePath = this._plsqlClazzFilePath.get(signature);
+				if(plsqlClazzFilePath) {
+					await this._vm.suspend();
+					let bps = this._breakPoints.get(plsqlClazzFilePath.aFilePath);
+					if(bps) {
+						for(let bp of bps) {
+							bp.verified = false;
+						}
+					}
+					if(!this._unloaddedClazzes.get(signature)) {
+
+						this.addClassPrepareRequest(signature, plsqlClazzFilePath.aFilePath, plsqlClazzFilePath.aBodyLine);
+						if(signature.indexOf('$Oracle/PackageBody') > -1) {
+							this.addClassPrepareRequest(signature.replace('$Oracle/PackageBody', '$Oracle/Package'), plsqlClazzFilePath.aFilePath, plsqlClazzFilePath.aBodyLine);
+						}
+					}
+					await this._vm.resume();
+				}
 			  } else if (['BREAKPOINT', 'SINGLE_STEP'].indexOf(event.eventKind) > -1) {
 
 				try {
@@ -532,6 +551,7 @@ export class PlsqlRuntime extends EventEmitter {
 		const er = this._vm.eventRequestManager.createClassPrepareRequest();
 		er.suspendPolicy = 2;
 		er.addClassFilter(clazzName);
+		er.addCountFilter(1);
 
 		this._unloaddedClazzes.set(signature, file + ':' + line);
 
