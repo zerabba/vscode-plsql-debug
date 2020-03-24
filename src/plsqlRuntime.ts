@@ -38,7 +38,7 @@ export class PlsqlRuntime extends EventEmitter {
 							  'L$Oracle/Builtin/LONG;', 'L$Oracle/Builtin/DATE;', 'L$Oracle/Builtin/BINARY_FLOAT;', 'L$Oracle/Builtin/BINARY_DOUBLE;',
 							  'L$Oracle/Builtin/TIMESTAMP;', 'L$Oracle/Builtin/TIMESTAMP_WITH_TIMEZONE;', 'L$Oracle/Builtin/TIMESTAMP_WITH_LOCAL_TIMEZONE;',
 							  'L$Oracle/Builtin/RAW;', 'L$Oracle/Builtin/UROWID;', 'L$Oracle/Builtin/CHAR;', 'L$Oracle/Builtin/NCHAR;',
-							  'L$Oracle/Builtin/CLOB;', 'L$Oracle/Builtin/NCLOB;']
+							  'L$Oracle/Builtin/CLOB;', 'L$Oracle/Builtin/NCLOB;', 'L$Oracle/Builtin/BOOLEAN;']
 
 	private _regexBody = /create or replace (function|procedure|trigger|package body) (?<schema>[^\.]*\.){0,1}(?<package>[^\n|\()]*)/gi;
 
