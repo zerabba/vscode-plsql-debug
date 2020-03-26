@@ -76,7 +76,7 @@ export class PlsqlDebugSession extends LoggingDebugSession {
 		});
 		this._runtime.on('loaddedSource', (path) => {
 			let source = this._loaddedSource.get(path);
-			if(source) {
+			if (source) {
 				this.sendEvent(new LoadedSourceEvent('changed', source));
 			} else {
 				source = this.createSource(path);
@@ -167,7 +167,7 @@ export class PlsqlDebugSession extends LoggingDebugSession {
 	}
 
 	protected loadedSourcesRequest(response: DebugProtocol.LoadedSourcesResponse, args: DebugProtocol.LoadedSourcesArguments, request?: DebugProtocol.Request): void {
-        /* */
+		/* */
 	}
 
 	protected async setBreakPointsRequest(response: DebugProtocol.SetBreakpointsResponse, args: DebugProtocol.SetBreakpointsArguments): Promise<void> {
@@ -181,8 +181,8 @@ export class PlsqlDebugSession extends LoggingDebugSession {
 		// set and verify breakpoint locations
 		const actualBreakpoints = clientLines.map(l => {
 			let { verified, line, id } = this._runtime.setBreakPoint(path, this.convertClientLineToDebugger(l));
-			const bp = <DebugProtocol.Breakpoint> new Breakpoint(verified, this.convertDebuggerLineToClient(line), undefined, this._loaddedSource.get(path));
-			bp.id= id;
+			const bp = <DebugProtocol.Breakpoint>new Breakpoint(verified, this.convertDebuggerLineToClient(line), undefined, this._loaddedSource.get(path));
+			bp.id = id;
 			return bp;
 		});
 
