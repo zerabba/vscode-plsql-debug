@@ -1,3 +1,8 @@
+## 1.0.4
+* Added Builtin BINARY_INTEGER, PLS_INTEGER
+* Added the global variables from the current package header
+* Added evaluation for watchers and hovers
+
 ## 1.0.3
 * Added Builtin Boolean
 * Added tags in package.json

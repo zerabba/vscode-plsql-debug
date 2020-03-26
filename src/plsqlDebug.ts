@@ -114,6 +114,9 @@ export class PlsqlDebugSession extends LoggingDebugSession {
 		// the adapter implements the configurationDoneRequest.
 		response.body.supportsConfigurationDoneRequest = true;
 
+		// make VS Code to use 'evaluate' when hovering over source
+		response.body.supportsEvaluateForHovers = true;
+
 		response.body.supportsSetVariable = true;
 
 		response.body.supportsLoadedSourcesRequest = true;
@@ -238,12 +241,15 @@ export class PlsqlDebugSession extends LoggingDebugSession {
 	}
 
 	protected scopesRequest(response: DebugProtocol.ScopesResponse, args: DebugProtocol.ScopesArguments): void {
+		let currScopes: Scope[] = new Array<Scope>();
+		currScopes.push(new Scope("Local", this._runtime.getNewVariableHandles("local"), false));
+		if (this._runtime.currentStepInPackage()) {
+			currScopes.push(new Scope("Global Header", this._runtime.getNewVariableHandles("globalHeader"), true));
+			currScopes.push(new Scope("Global Body", this._runtime.getNewVariableHandles("globalBody"), true));
+		}
 
 		response.body = {
-			scopes: [
-				new Scope("Local", this._runtime.getNewVariableHandles("local"), false),
-				new Scope("Global", this._runtime.getNewVariableHandles("global"), true)
-			]
+			scopes: currScopes
 		};
 		this.sendResponse(response);
 	}
@@ -283,6 +289,21 @@ export class PlsqlDebugSession extends LoggingDebugSession {
 		this.sendResponse(response);
 	}
 
+	protected async evaluateRequest(response: DebugProtocol.EvaluateResponse, args: DebugProtocol.EvaluateArguments): Promise<void> {
+		let reply: DebugProtocol.Variable = await this._runtime.evaluateRequest(args.expression);
+		if (reply) {
+			response.body = {
+				result: reply.value,
+				variablesReference: reply.variablesReference
+			};
+		} else {
+			response.body = {
+				result: 'undefined',
+				variablesReference: 0
+			};
+		}
+		this.sendResponse(response);
+	}
 	protected cancelRequest(response: DebugProtocol.CancelResponse, args: DebugProtocol.CancelArguments) {
 		if (args.requestId) {
 			this._cancelationTokens.set(args.requestId, true);

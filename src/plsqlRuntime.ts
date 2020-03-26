@@ -35,10 +35,11 @@ export class PlsqlRuntime extends EventEmitter {
 	private _currentMethod;
 
 	private _builtinValues = ['L$Oracle/Builtin/VARCHAR2;', 'L$Oracle/Builtin/NVARCHAR2;', 'L$Oracle/Builtin/NUMBER;', 'L$Oracle/Builtin/FLOAT;',
-							  'L$Oracle/Builtin/LONG;', 'L$Oracle/Builtin/DATE;', 'L$Oracle/Builtin/BINARY_FLOAT;', 'L$Oracle/Builtin/BINARY_DOUBLE;',
-							  'L$Oracle/Builtin/TIMESTAMP;', 'L$Oracle/Builtin/TIMESTAMP_WITH_TIMEZONE;', 'L$Oracle/Builtin/TIMESTAMP_WITH_LOCAL_TIMEZONE;',
-							  'L$Oracle/Builtin/RAW;', 'L$Oracle/Builtin/UROWID;', 'L$Oracle/Builtin/CHAR;', 'L$Oracle/Builtin/NCHAR;',
-							  'L$Oracle/Builtin/CLOB;', 'L$Oracle/Builtin/NCLOB;', 'L$Oracle/Builtin/BOOLEAN;']
+		'L$Oracle/Builtin/LONG;', 'L$Oracle/Builtin/DATE;', 'L$Oracle/Builtin/BINARY_FLOAT;', 'L$Oracle/Builtin/BINARY_DOUBLE;',
+		'L$Oracle/Builtin/TIMESTAMP;', 'L$Oracle/Builtin/TIMESTAMP_WITH_TIMEZONE;', 'L$Oracle/Builtin/TIMESTAMP_WITH_LOCAL_TIMEZONE;',
+		'L$Oracle/Builtin/RAW;', 'L$Oracle/Builtin/UROWID;', 'L$Oracle/Builtin/CHAR;', 'L$Oracle/Builtin/NCHAR;',
+		'L$Oracle/Builtin/CLOB;', 'L$Oracle/Builtin/NCLOB;', 'L$Oracle/Builtin/BOOLEAN;',
+		'L$Oracle/Builtin/PLS_INTEGER;', 'L$Oracle/Builtin/BINARY_INTEGER;']
 
 	private _regexBody = /create or replace (function|procedure|trigger|package body) (?<schema>[^\.]*\.){0,1}(?<package>[^\n|\()]*)/gi;
 
@@ -271,7 +272,7 @@ export class PlsqlRuntime extends EventEmitter {
 				}
 				result = {
 					name: name,
-					type: "string",
+					type: signature.slice(signature.lastIndexOf('/') + 1, -1),
 					value: valueContent,
 					variablesReference: 0
 				}
@@ -284,7 +285,7 @@ export class PlsqlRuntime extends EventEmitter {
 					value: "Object",
 					variablesReference: this.getNewVariableHandles(signature)
 				}
-			} else {
+			} else if (!signature.startsWith('Ljava/')) {
 				this.sendEvent('output', 'Signature not yet implemented:' + signature);
 				console.error('Signature not yet implemented:' + signature);
 				const BuiltinClazz = (await this._vm.retrieveClassesBySignature(signature))[0];
@@ -331,8 +332,12 @@ export class PlsqlRuntime extends EventEmitter {
 		}
 	}
 
-	private async setGlobaleVariable(name, newValue): Promise<any> {
-		const clazz = (await this._vm.retrieveClassesBySignature(this._currentFrame.location.declaringType.signature))[0];
+	private async setGlobaleVariable(fromHeader, name, newValue): Promise<any> {
+		let signature = this._currentFrame.location.declaringType.signature;
+		if (fromHeader) {
+			signature = signature.replace('$Oracle/PackageBody/', '$Oracle/Package/')
+		}
+		const clazz = (await this._vm.retrieveClassesBySignature(signature))[0];
 		const fields = await clazz.visibleFields();
 
 		for (let cpt = 0; cpt < fields.length; cpt++) {
@@ -365,10 +370,48 @@ export class PlsqlRuntime extends EventEmitter {
 		const id = this._variableHandles.get(variablesReference);
 		if (id === 'local') {
 			return await this.setVariable(name, newValue);
-		} else if (id === 'global') {
-			return await this.setGlobaleVariable(name, newValue);
+		} else if (id === 'globalHeader') {
+			return await this.setGlobaleVariable(true, name, newValue);
+		} else if (id === 'globalBody') {
+			return await this.setGlobaleVariable(false, name, newValue);
 		} else {
 			return await this.setObjectVariable(id, name, newValue);
+		}
+	}
+
+	public currentStepInPackage(): Promise<boolean> {
+		return this._currentFrame.location.declaringType.signature.startsWith('L$Oracle/Package');
+	}
+
+	public async evaluateRequest(value: string): Promise<any> {
+		let values = value.toUpperCase().split('.');
+		let arrVariables = (await this.getVariables());
+		if (this.currentStepInPackage()) {
+			arrVariables.concat(await this.getGlobaleVariables(true));
+			arrVariables.concat(await this.getGlobaleVariables(false));
+		}
+		if (values.length < 2) {
+			for (let variable of arrVariables) {
+				if (variable.name === values[0]) {
+					return variable;
+				}
+
+			}
+		} else {
+
+			for (let i = 0; i < values.length; i++) {
+				let currVal = values[i];
+				for (let variable of arrVariables) {
+					if (variable.name === currVal) {
+						if (variable.type === 'object') {
+							arrVariables = await this.getObjectVariables(this._variableHandles.get(variable.variablesReference));
+							break;
+						} else {
+							return variable
+						}
+					}
+				}
+			}
 		}
 	}
 
@@ -380,8 +423,10 @@ export class PlsqlRuntime extends EventEmitter {
 		const id = this._variableHandles.get(variablesReference);
 		if (id === 'local') {
 			return await this.getVariables();
-		} else if (id === 'global') {
-			return await this.getGlobaleVariables();
+		} else if (id === 'globalHeader') {
+			return await this.getGlobaleVariables(true);
+		} else if (id === 'globalBody') {
+			return await this.getGlobaleVariables(false);
 		} else {
 			return await this.getObjectVariables(id);
 		}
@@ -397,9 +442,13 @@ export class PlsqlRuntime extends EventEmitter {
 		return variables;
 	}
 
-	private async getGlobaleVariables(): Promise<DebugProtocol.Variable[]> {
+	private async getGlobaleVariables(fromHeader: Boolean): Promise<DebugProtocol.Variable[]> {
 		const variables: DebugProtocol.Variable[] = [];
-		const clazz = (await this._vm.retrieveClassesBySignature(this._currentFrame.location.declaringType.signature))[0];
+		let signature = this._currentFrame.location.declaringType.signature;
+		if (fromHeader) {
+			signature = signature.replace('$Oracle/PackageBody/', '$Oracle/Package/')
+		}
+		const clazz = (await this._vm.retrieveClassesBySignature(signature))[0];
 		const fields = await clazz.visibleFields();
 
 		for (let cpt = 0; cpt < fields.length; cpt++) {
