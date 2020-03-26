@@ -1,3 +1,6 @@
+## 1.0.5
+* Updated readme.md
+
 ## 1.0.4
 * Added Builtin BINARY_INTEGER, PLS_INTEGER
 * Added the global variables from the current package header
