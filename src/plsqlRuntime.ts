@@ -95,7 +95,7 @@ export class PlsqlRuntime extends EventEmitter {
 					/*} else if(event.eventKind === 'CLASS_PREPARE') {
 						console.log('CLASS_PREPARE: '+event.signature);*/
 				} else if (event.eventKind === 'CLASS_UNLOAD') {
-					const signature = this.getSignature(event.signature);
+					const signature = this.parseSignature(event.signature);
 					const plsqlClazzFilePath = this._plsqlClazzFilePath.get(signature);
 					if (plsqlClazzFilePath) {
 						await this._vm.suspend();
@@ -117,12 +117,19 @@ export class PlsqlRuntime extends EventEmitter {
 				} else if (['BREAKPOINT', 'SINGLE_STEP'].indexOf(event.eventKind) > -1) {
 
 					try {
+
 						this._currentThread = this._vm.thread(event.thread);
 						const frames = await this._currentThread.frames();
 						this._currentFrame = frames[0];
 
-						if (this._currentFrame.location.declaringType.signature) {
-							const clazz = (await this._vm.retrieveClassesBySignature(this.getSignature(this._currentFrame.location.declaringType.signature)))[0];
+						let signature = this._currentFrame.location.declaringType.signature;
+						if (!signature) {
+							const clazz = this._vm.classType(event.location.classID);
+							signature = await clazz.getSignature();
+						}
+
+						if (signature) {
+							const clazz = (await this._vm.retrieveClassesBySignature(signature))[0];
 							const className = await clazz.getName();
 							this._currentMethod = await this._currentFrame.location.getMethod();
 
@@ -196,14 +203,6 @@ export class PlsqlRuntime extends EventEmitter {
 		}
 	}
 
-	private getSignature(signature) {
-		let strSignature = signature;
-		while (strSignature instanceof Object) {
-			strSignature = strSignature.signature;
-		}
-		return strSignature;
-	}
-
 	public async stack(maxLevels: number): Promise<any> {
 		let cpt = 0;
 		const frames = new Array<any>();
@@ -213,8 +212,8 @@ export class PlsqlRuntime extends EventEmitter {
 
 			for (const frame of vmFrames) {
 				try {
-					if (frame.location.declaringType && this.getSignature(frame.location.declaringType.signature)) {
-						const clazz = (await this._vm.retrieveClassesBySignature(this.getSignature(frame.location.declaringType.signature)))[0];
+					if (frame.location.declaringType && this.parseSignature(frame.location.declaringType.signature)) {
+						const clazz = (await this._vm.retrieveClassesBySignature(this.parseSignature(frame.location.declaringType.signature)))[0];
 						if (clazz) {
 							let className = (await clazz.getName())
 							if (className) {
@@ -595,6 +594,14 @@ export class PlsqlRuntime extends EventEmitter {
 		}
 	}
 
+	private parseSignature(signature) {
+		let strSignature = signature;
+		while (strSignature instanceof Object) {
+			strSignature = strSignature.signature;
+		}
+		return strSignature;
+	}
+
 	private async addClassPrepareRequest(signature, file, line) {
 		const clazzName = signature.replace(/\//g, '.').slice(1, -1);
 		const er = this._vm.eventRequestManager.createClassPrepareRequest();
@@ -605,7 +612,7 @@ export class PlsqlRuntime extends EventEmitter {
 		this._unloaddedClazzes.set(signature, file + ':' + line);
 
 		er.on('event', async (event) => {
-			const signature = this.getSignature(event.signature);
+			const signature = this.parseSignature(event.signature);
 			const path = this._unloaddedClazzes.get(signature);
 			if (path) {
 				const file = path.substring(0, path.lastIndexOf(':'));

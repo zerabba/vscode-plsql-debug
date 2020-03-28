@@ -1,3 +1,6 @@
+## 1.0.6
+* Fixing step into, could not retrieve the class in the next step
+
 ## 1.0.5
 * Updated readme.md
 

@@ -199,10 +199,18 @@ class ReferenceType extends Type {
       if (this.vm.canGet1_5LanguageFeatures) {
         await this.getGenericSignature();
       } else {
-        this.signature = await this.vm.send(new Signature(this.ref));
+        this.signature = this.parseSignature(await this.vm.send(new Signature(this.ref)));
       }
     }
     return this.signature;
+  }
+
+  private parseSignature(signature) {
+    let strSignature = signature;
+		while (strSignature instanceof Object) {
+			strSignature = strSignature.signature;
+		}
+		return strSignature;
   }
 
   async getGenericSignature() {
