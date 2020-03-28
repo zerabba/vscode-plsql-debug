@@ -205,7 +205,7 @@ class ReferenceType extends Type {
     return this.signature;
   }
 
-  private parseSignature(signature) {
+  parseSignature(signature) {
     let strSignature = signature;
 		while (strSignature instanceof Object) {
 			strSignature = strSignature.signature;
