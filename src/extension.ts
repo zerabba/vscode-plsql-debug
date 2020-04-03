@@ -49,6 +49,8 @@ class PlsqlConfigurationProvider implements vscode.DebugConfigurationProvider {
 				config.program = '${file}';
 				config.watchingSchemas = [''];
 				config.socketPort = 4000;
+				config.evalClassName = "com.vscode.VSCodeDebug";
+				config.evalBreakpointLine = 7;
 			}
 		}
 

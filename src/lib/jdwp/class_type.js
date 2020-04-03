@@ -127,11 +127,17 @@ class ClassType extends ReferenceType {
       args,
       options,
     }));
-    const exception = this.vm.objectMirror(ret.exception.objectId, ret.exception.tag);
-    if (exception) {
-      const err = new Error('Exception occurred in target VM');
-      err.exception = exception;
-      throw err;
+    try {
+      if(ret.exception && ret.exception.tag > 0 && ret.exception.objectId !== "") {
+        const exception = this.vm.objectMirror(ret.exception.objectId, ret.exception.tag);
+        if (exception) {
+          const err = new Error('Exception occurred in target VM');
+          err.exception = exception;
+          throw err;
+        }
+      }
+    } catch(err) {
+      console.log(err);
     }
 
     // TODO: INVOKE_SINGLE_THREADED

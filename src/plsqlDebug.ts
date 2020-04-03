@@ -26,6 +26,10 @@ interface LaunchRequestArguments extends DebugProtocol.LaunchRequestArguments {
 	watchingSchemas: string[];
 	/** The port number where the client will connect */
 	socketPort: number;
+	/** The name of the java class where to stop for evaluation (Case sensitive!) */
+	evalClassName: string;
+	/** The line number of the java class where to stop for evaluation */
+	evalBreakpointLine: number;
 	/** enable logging the Debug Adapter Protocol */
 	trace?: boolean;
 }
@@ -155,7 +159,7 @@ export class PlsqlDebugSession extends LoggingDebugSession {
 		await this._configurationDone.wait(1000);
 
 		// start the program in the runtime
-		await this._runtime.start(args.program, args.watchingSchemas, args.socketPort);
+		await this._runtime.start(args.program, args.watchingSchemas, args.socketPort, args.evalClassName, args.evalBreakpointLine);
 
 		this.sendResponse(response);
 	}

@@ -33,6 +33,12 @@ export class PlsqlRuntime extends EventEmitter {
 	private _currentThread;
 	private _currentFrame;
 	private _currentMethod;
+	private _breakpointEvalOutSign: string = '';
+
+	private _evalCustomEnabled: Boolean = false;
+	private _evalClassName;
+	private _evalClassSign;
+	private _evalBreakpointLine;
 
 	private _builtinValues = ['L$Oracle/Builtin/VARCHAR2;', 'L$Oracle/Builtin/NVARCHAR2;', 'L$Oracle/Builtin/NUMBER;', 'L$Oracle/Builtin/FLOAT;',
 		'L$Oracle/Builtin/LONG;', 'L$Oracle/Builtin/DATE;', 'L$Oracle/Builtin/BINARY_FLOAT;', 'L$Oracle/Builtin/BINARY_DOUBLE;',
@@ -77,7 +83,7 @@ export class PlsqlRuntime extends EventEmitter {
 	/**
 	 * Start executing the given program.
 	 */
-	public async start(program: string, watchingSchemas: string[], socketPort: number) {
+	public async start(program: string, watchingSchemas: string[], socketPort: number, evalClassName: string, evalBreakpointLine: number) {
 		this.sendEvent('output', 'Debug started on port ' + socketPort + ', waiting on the client to connect...');
 		await new Promise(resolve => setTimeout(resolve, 1000));
 		this._vm = await listen(socketPort);
@@ -123,9 +129,29 @@ export class PlsqlRuntime extends EventEmitter {
 						this._currentFrame = frames[0];
 
 						let signature = this._currentFrame.location.declaringType.signature;
+
 						if (!signature) {
 							const clazz = this._vm.classType(event.location.classID);
 							signature = await clazz.getSignature();
+						}
+
+						if (this._evalCustomEnabled) {
+							if (signature == this._evalClassSign) {
+								try {
+									signature = frames[3].location.declaringType.signature;
+									if (!signature) {
+										const clazz = this._vm.classType(event.location.classID);
+										signature = await clazz.getSignature();
+									}
+									this._breakpointEvalOutSign = signature;
+								} catch (err) {
+									console.log(err);
+								}
+							} else if (signature && this._breakpointEvalOutSign == signature) {
+								this._breakpointEvalOutSign = "";
+							} else if (this._breakpointEvalOutSign !== "") {
+								signature = undefined;
+							}
 						}
 
 						if (signature) {
@@ -169,6 +195,25 @@ export class PlsqlRuntime extends EventEmitter {
 		});
 		await this._vm.ready();
 
+		if (evalClassName && evalClassName !== '') {
+			this._evalCustomEnabled = true;
+			this._evalClassName = evalClassName;
+			this._evalClassSign = 'L' + evalClassName.replace(/\./g, '/') + ';';
+			this._evalBreakpointLine = evalBreakpointLine;
+
+			const clazzes = (await this._vm.retrieveClassesBySignature(this._evalClassSign))
+			for (let clazz of clazzes) {
+				const locations = await clazz.locationsOfLine(this._evalBreakpointLine);
+				if (locations.length) {
+					let er = this._vm.eventRequestManager.createBreakpointRequest(locations[0]);
+					er.suspendPolicy = 1;
+					await er.enable();
+				}
+			}
+
+			await this.addClassPrepareDebugRequest();
+		}
+
 		await this.verifyBreakpoints('', false);
 
 		await this.loadSource(program);
@@ -185,6 +230,7 @@ export class PlsqlRuntime extends EventEmitter {
 	 * Continue execution to the end/beginning.
 	 */
 	public async continue(reverse = false) {
+		this._breakpointEvalOutSign = "";
 		await this._vm.resume();
 	}
 
@@ -379,39 +425,65 @@ export class PlsqlRuntime extends EventEmitter {
 	}
 
 	public currentStepInPackage(): Promise<boolean> {
-		return this._currentFrame.location.declaringType.signature.startsWith('L$Oracle/Package');
+		return this.parseSignature(this._currentFrame.location.declaringType.signature).startsWith('L$Oracle/Package');
 	}
 
 	public async evaluateRequest(value: string): Promise<any> {
-		let values = value.toUpperCase().split('.');
-		let arrVariables = (await this.getVariables());
-		if (this.currentStepInPackage()) {
-			arrVariables.concat(await this.getGlobaleVariables(true));
-			arrVariables.concat(await this.getGlobaleVariables(false));
-		}
-		if (values.length < 2) {
-			for (let variable of arrVariables) {
-				if (variable.name === values[0]) {
-					return variable;
+		if (this._breakpointEvalOutSign !== "") {
+
+			try {
+				let clazz = (await this._vm.retrieveClassesBySignature('Lcom/vscode/VSCodeDebug;'))[0];
+				let method = (await clazz.methodsByName('evalSqlStmt'))[0];
+				let returnValue = await clazz.invokeMethod(this._currentThread, method, [
+					await this._vm.createString(value),
+				], 0);
+				console.log(returnValue);
+				const resultObj = this._vm.objectMirror(returnValue.value, returnValue.tag);
+				let result = await resultObj.getValue();
+				return {
+					name: value,
+					type: "string",
+					value: result,
+					variablesReference: 0
 				}
 
+			} catch (err) {
+				console.log(err);
 			}
+
 		} else {
 
-			for (let i = 0; i < values.length; i++) {
-				let currVal = values[i];
+			let values = value.toUpperCase().split('.');
+			let arrVariables = (await this.getVariables());
+			if (this.currentStepInPackage()) {
+				arrVariables.concat(await this.getGlobaleVariables(true));
+				arrVariables.concat(await this.getGlobaleVariables(false));
+			}
+			if (values.length < 2) {
 				for (let variable of arrVariables) {
-					if (variable.name === currVal) {
-						if (variable.type === 'object') {
-							arrVariables = await this.getObjectVariables(this._variableHandles.get(variable.variablesReference));
-							break;
-						} else {
-							return variable
+					if (variable.name === values[0]) {
+						return variable;
+					}
+
+				}
+			} else {
+
+				for (let i = 0; i < values.length; i++) {
+					let currVal = values[i];
+					for (let variable of arrVariables) {
+						if (variable.name === currVal) {
+							if (variable.type === 'object') {
+								arrVariables = await this.getObjectVariables(this._variableHandles.get(variable.variablesReference));
+								break;
+							} else {
+								return variable
+							}
 						}
 					}
 				}
 			}
 		}
+
 	}
 
 	public getNewVariableHandles(name) {
@@ -622,6 +694,29 @@ export class PlsqlRuntime extends EventEmitter {
 				this._unloaddedClazzes.delete(signature);
 				this.sendEvent('loaddedSource', file);
 			}
+			await this._vm.resume();
+		});
+
+		await er.enable();
+	}
+
+	private async addClassPrepareDebugRequest() {
+		const er = this._vm.eventRequestManager.createClassPrepareRequest();
+		er.suspendPolicy = 2;
+		er.addClassFilter(this._evalClassName);
+		er.addCountFilter(1);
+
+		er.on('event', async () => {
+			const clazzes = await this._vm.retrieveClassesBySignature(this._evalClassSign);
+			for (const clazz of clazzes) {
+				const locations = await clazz.locationsOfLine(this._evalBreakpointLine);
+				if (locations.length) {
+					const er = this._vm.eventRequestManager.createBreakpointRequest(locations[0]);
+					er.suspendPolicy = 1;
+					await er.enable();
+				}
+			}
+			await this.addClassPrepareDebugRequest();
 			await this._vm.resume();
 		});
 

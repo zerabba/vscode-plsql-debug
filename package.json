@@ -1,7 +1,7 @@
 {
 	"name": "plsql-debug",
 	"displayName": "Plsql Debug",
-	"version": "1.0.6",
+	"version": "1.0.7",
 	"icon": "images/plsql-debug-icon.png",
 	"publisher": "zerabba",
 	"description": "PLSQL Debug extension for VS Code.",
@@ -66,6 +66,9 @@
 		"breakpoints": [
 			{
 				"language": "plsql"
+			},
+			{
+				"language": "oraclesql"
 			}
 		],
 		"debuggers": [
@@ -98,6 +101,16 @@
 								"type": "boolean",
 								"description": "Enable logging of the Debug Adapter Protocol.",
 								"default": true
+							},
+							"evalClassName": {
+								"type": "string",
+								"description": "The name of the java class where to stop for evaluation (Case sensitive!)",
+								"default": "com.vscode.VSCodeDebug"
+							},
+							"evalBreakpointLine": {
+								"type": "number",
+								"description": "The line number of the java class where to stop for evaluation",
+								"default": 7
 							}
 						}
 					}
@@ -120,7 +133,9 @@
 							"name": "PLSQL Debug",
 							"program": "^\"\\${file}\"",
 							"watchingSchemas": "[\"\"]",
-							"socketPort": "4000"
+							"socketPort": "4000",
+							"evalClassName": "com.vscode.VSCodeDebug",
+							"evalBreakpointLine": "7"
 						}
 					}
 				]

@@ -1,3 +1,7 @@
+## 1.0.7
+* Debug is now also working with oraclesql type
+* We can now evaluate some other things than just variables, for that we need to be in a java context (jvm).
+
 ## 1.0.6
 * Fixing step into, could not retrieve the class in the next step
 
