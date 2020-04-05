@@ -62,7 +62,9 @@ In your project, you need to put this kind of configuraiton in launch.json file:
   "name": "Plsql Debug",
   "program": "${file}",
   "watchingSchemas": ["SCHEMA1", "SCHEMA2"],
-  "socketPort": 4000
+  "socketPort": 4000,
+  "evalClassName": "com.vscode.VSCodeDebug",
+  "evalBreakpointLine": "7"
 }
 ```
 
@@ -75,7 +77,9 @@ or
   "name": "OracleSQL Debug",
   "program": "${file}",
   "watchingSchemas": ["SCHEMA1", "SCHEMA2"],
-  "socketPort": 4000
+  "socketPort": 4000,
+  "evalClassName": "com.vscode.VSCodeDebug",
+  "evalBreakpointLine": "7"
 }
 ```
 
