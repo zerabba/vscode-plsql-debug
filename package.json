@@ -133,9 +133,7 @@
 							"name": "PLSQL Debug",
 							"program": "^\"\\${file}\"",
 							"watchingSchemas": "[\"\"]",
-							"socketPort": "4000",
-							"evalClassName": "com.vscode.VSCodeDebug",
-							"evalBreakpointLine": "7"
+							"socketPort": "4000"
 						}
 					}
 				]

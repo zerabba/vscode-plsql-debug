@@ -18,12 +18,13 @@ export function activate(context: vscode.ExtensionContext) {
 	}
 
 	// override VS Code's default implementation of the debug hover
-	vscode.languages.registerEvaluatableExpressionProvider('plsql', {
+	/*vscode.languages.registerEvaluatableExpressionProvider('plsql', {
 		provideEvaluatableExpression(document: vscode.TextDocument, position: vscode.Position): vscode.ProviderResult<vscode.EvaluatableExpression> {
 			const wordRange = document.getWordRangeAtPosition(position)
 			return wordRange ? new vscode.EvaluatableExpression(wordRange) : undefined;
 		}
-	});
+	});*/
+
 }
 
 export function deactivate() {
@@ -49,8 +50,6 @@ class PlsqlConfigurationProvider implements vscode.DebugConfigurationProvider {
 				config.program = '${file}';
 				config.watchingSchemas = [''];
 				config.socketPort = 4000;
-				config.evalClassName = "com.vscode.VSCodeDebug";
-				config.evalBreakpointLine = 7;
 			}
 		}
 

@@ -37,6 +37,18 @@ end;
 /
 ```
 
+### Custom evaluation
+
+It's now possible to evaluate other things than the local variables. For that, the extension needs to be in a java context to be able to invoke a method (it's not possible directly in Oracle context).
+
+I provide a [sample file](sample/evalBreakpointSample.sql) to configure the custom evaluation in your database. Then you need to provide the java class name and line in this class of the first instruction of the evalBreakpoint method in the Launch.json file (see below in extension configuration).
+
+In your packages, you can call the procedure evalBreakpoint where you want to make some custom evaluations. The debugger will automaticlly stops on this line (you don't need to put a breakpoint on it) and when the debugguer hit this breakpoint, you can evaluate values in the debug console or watcher:
+
+![Image of Definition](images/evaluation_sample.png)
+
+Important: when you are in this context, local variables values are not available, as you are currently in the java virtual machine!
+
 ## Extension configuration
 
 ### Launch.json
@@ -50,9 +62,9 @@ In your project, you need to put this kind of configuraiton in launch.json file:
   "name": "Plsql Debug",
   "program": "${file}",
   "watchingSchemas": ["SCHEMA1", "SCHEMA2"],
-   "socketPort": 4000,
-   "evalClassName": "com.vscode.VSCodeDebug",
-	 "evalBreakpointLine": "7"
+  "socketPort": 4000,
+  "evalClassName": "com.vscode.VSCodeDebug",
+  "evalBreakpointLine": "7"
 }
 ```
 

@@ -89,7 +89,13 @@ export class PlsqlRuntime extends EventEmitter {
 		this._vm = await listen(socketPort);
 
 		for (let schema of watchingSchemas) {
-			this._arrSchemas.add(schema.toUpperCase());
+			if (schema.startsWith('"')) {
+				schema = schema.replace(/\"/g, '');
+			}
+			else {
+				schema = schema.toUpperCase();
+			}
+			this._arrSchemas.add(schema);
 			this.sendEvent('output', 'Adding watching schema ' + schema);
 		}
 
@@ -624,19 +630,31 @@ export class PlsqlRuntime extends EventEmitter {
 			for (let ln = 0; ln < this._sourceLines.length; ln++) {
 				let match = this._regexBody.exec(this._sourceLines[ln]);
 				if (match) {
-					const forcedSchema = match[2];
+					let forcedSchema = match[2];
 					let currentClazzName = '';
 					if (forcedSchema) {
+						if (forcedSchema.startsWith('"')) {
+							forcedSchema = forcedSchema.replace(/\"/g, '');
+						}
+						else {
+							forcedSchema = forcedSchema.toUpperCase();
+						}
 						currentClazzName = forcedSchema;
 					}
 					currentClazzName += match[3];
 					if (currentClazzName.length > 0) {
-						currentClazzName = currentClazzName.toUpperCase().replace(/\s/, '');
+						if(currentClazzName.indexOf('"') > -1) {
+							currentClazzName = currentClazzName.replace(/\"/g, '');
+						}
+							else {
+								currentClazzName = currentClazzName.toUpperCase();
+							}
+						currentClazzName = currentClazzName.replace(/\s/, '');
 						let oracleType = match[1].replace(' ', '').toLowerCase();
 						oracleType = (oracleType.charAt(0).toUpperCase() + oracleType.slice(1)).replace('body', '');
 
 						for (let schema of this._arrSchemas) {
-							if (!forcedSchema || forcedSchema.toUpperCase().substring(0, forcedSchema.length - 1) === schema) {
+							if (!forcedSchema || forcedSchema.substring(0, forcedSchema.length - 1) === schema) {
 								let signature = 'L$Oracle/' + oracleType + '/';
 								if (forcedSchema) {
 									signature += currentClazzName.replace(/\./g, '/') + ';';
