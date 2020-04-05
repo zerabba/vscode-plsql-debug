@@ -624,7 +624,13 @@ export class PlsqlRuntime extends EventEmitter {
 		if (this._sourceFile !== file) {
 			this._sourceFile = file;
 			let clazzesFound = false;
-			this._sourceLines = readFileSync(this._sourceFile).toString().split('\n');
+
+			try {
+				this._sourceLines = readFileSync(this._sourceFile).toString().split('\n');
+			} catch (err) {
+				console.log('Error', err); // file doesn't exists anymore
+				return;
+			}
 
 			// find package body statement
 			for (let ln = 0; ln < this._sourceLines.length; ln++) {
