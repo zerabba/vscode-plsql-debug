@@ -11,9 +11,9 @@
 	},
 	"license": "MIT",
 	"keywords": [
-	    "plsql",
-            "oracle",
-	    "multi-root ready"
+		"plsql",
+		"oracle",
+		"multi-root ready"
 	],
 	"engines": {
 		"vscode": "^1.43.0"
@@ -40,7 +40,7 @@
 		"publish": "vsce publish"
 	},
 	"dependencies": {
-		"@types/node": "10.12.12",
+		"@types/node": "13.9.2",
 		"await-notify": "1.0.1",
 		"long": "^4.0.0",
 		"net": "^1.0.2",
@@ -50,12 +50,12 @@
 		"vscode-debugadapter": "^1.39"
 	},
 	"devDependencies": {
-		"@types/node": "10.12.12",
-		"tslint": "5.18.0",
-		"typescript": "3.5.3",
-		"vsce": "1.66.0",
+		"@types/node": "13.9.2",
+		"tslint": "6.1.0",
+		"typescript": "3.8.3",
+		"vsce": "1.74.0",
 		"vscode": "1.1.36",
-		"vscode-debugadapter-testsupport": "1.40.2-pre.0"
+		"vscode-debugadapter-testsupport": "1.40.3"
 	},
 	"main": "./out/extension",
 	"activationEvents": [
@@ -132,8 +132,78 @@
 							"request": "launch",
 							"name": "PLSQL Debug",
 							"program": "^\"\\${file}\"",
-							"watchingSchemas": "[\"\"]",
-							"socketPort": "4000"
+							"watchingSchemas": [
+								""
+							],
+							"socketPort": 4000
+						}
+					}
+				]
+			},
+			{
+				"type": "oraclesql",
+				"label": "OracleSql Debug",
+				"program": "./out/debugAdapter.js",
+				"runtime": "node",
+				"configurationAttributes": {
+					"launch": {
+						"required": [
+							"program"
+						],
+						"properties": {
+							"program": {
+								"type": "string",
+								"description": "Absolute path to a plsql file.",
+								"default": "${file}"
+							},
+							"watchingSchemas": {
+								"type": "array",
+								"description": "List of schema to look after for breakpoints."
+							},
+							"socketPort": {
+								"type": "number",
+								"description": "The port number where the client will connect.",
+								"default": 4000
+							},
+							"trace": {
+								"type": "boolean",
+								"description": "Enable logging of the Debug Adapter Protocol.",
+								"default": true
+							},
+							"evalClassName": {
+								"type": "string",
+								"description": "The name of the java class where to stop for evaluation (Case sensitive!)",
+								"default": "com.vscode.VSCodeDebug"
+							},
+							"evalBreakpointLine": {
+								"type": "number",
+								"description": "The line number of the java class where to stop for evaluation",
+								"default": 7
+							}
+						}
+					}
+				},
+				"initialConfigurations": [
+					{
+						"type": "oraclesql",
+						"request": "launch",
+						"name": "OracleSQL Debug",
+						"program": "${file}"
+					}
+				],
+				"configurationSnippets": [
+					{
+						"label": "OracleSQL Debug: Launch",
+						"description": "A new configuration for 'debugging' a user selected oraclesql file.",
+						"body": {
+							"type": "oraclesql",
+							"request": "launch",
+							"name": "OracleSQL Debug",
+							"program": "^\"\\${file}\"",
+							"watchingSchemas": [
+								""
+							],
+							"socketPort": 4000
 						}
 					}
 				]

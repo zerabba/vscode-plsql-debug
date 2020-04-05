@@ -62,13 +62,37 @@ In your project, you need to put this kind of configuraiton in launch.json file:
   "name": "Plsql Debug",
   "program": "${file}",
   "watchingSchemas": ["SCHEMA1", "SCHEMA2"],
-  "socketPort": 4000,
-  "evalClassName": "com.vscode.VSCodeDebug",
-  "evalBreakpointLine": "7"
+  "socketPort": 4000
+}
+```
+
+or
+
+```json
+{
+  "type": "oraclesql",
+  "request": "launch",
+  "name": "OracleSQL Debug",
+  "program": "${file}",
+  "watchingSchemas": ["SCHEMA1", "SCHEMA2"],
+  "socketPort": 4000
 }
 ```
 
 Note: watchingSchemas is very important! You need to specify all the schemas that you want to debug. When we start the debug, we put an event that will trigger on a class load. The problem is that currenctly we cannot use the '*' symbol to match several schema...
+
+## Usage
+For example: use this code to debug from sql+
+```
+  -- activate debug for session
+  alter session set PLSQL_OPTIMIZE_LEVEL=1;
+  -- activate debug from client
+  EXEC DBMS_DEBUG_JDWP.CONNECT_TCP( 'localhost', '4000');
+  -- excecute to debug method
+  exec hr_utils.update_employee_job(100, 4, 10, 100);
+  -- deactiveate debug
+  EXEC DBMS_DEBUG_JDWP.DISCONNECT;
+```
 
 ## Status
 

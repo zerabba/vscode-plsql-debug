@@ -9,22 +9,25 @@ export function activate(context: vscode.ExtensionContext) {
 	// register a configuration provider for 'plsql' debug type
 	const provider = new PlsqlConfigurationProvider();
 	context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('plsql', provider));
+	context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider('oraclesql', provider));
 
 	// debug adapters can be run in different ways by using a vscode.DebugAdapterDescriptorFactory:
 	let factory: vscode.DebugAdapterDescriptorFactory = new InlineDebugAdapterFactory();
 	context.subscriptions.push(vscode.debug.registerDebugAdapterDescriptorFactory('plsql', factory));
+	context.subscriptions.push(vscode.debug.registerDebugAdapterDescriptorFactory('oraclesql', factory));
 	if ('dispose' in factory) {
 		context.subscriptions.push(factory);
 	}
 
 	// override VS Code's default implementation of the debug hover
-	/*vscode.languages.registerEvaluatableExpressionProvider('plsql', {
+	const provideEvaluatableExpression = {
 		provideEvaluatableExpression(document: vscode.TextDocument, position: vscode.Position): vscode.ProviderResult<vscode.EvaluatableExpression> {
 			const wordRange = document.getWordRangeAtPosition(position)
 			return wordRange ? new vscode.EvaluatableExpression(wordRange) : undefined;
 		}
-	});*/
-
+	};
+	vscode.languages.registerEvaluatableExpressionProvider('plsql', provideEvaluatableExpression);
+	vscode.languages.registerEvaluatableExpressionProvider('oraclesql', provideEvaluatableExpression);
 }
 
 export function deactivate() {
@@ -43,8 +46,8 @@ class PlsqlConfigurationProvider implements vscode.DebugConfigurationProvider {
 		// if launch.json is missing or empty
 		if (!config.type && !config.request && !config.name) {
 			const editor = vscode.window.activeTextEditor;
-			if (editor && editor.document.languageId === 'plsql') {
-				config.type = 'plsql';
+			if (editor && ( editor.document.languageId === 'plsql' || editor.document.languageId === 'oraclesql') ) {
+				config.type = editor.document.languageId;
 				config.name = 'Launch';
 				config.request = 'launch';
 				config.program = '${file}';
