@@ -20,14 +20,14 @@ export function activate(context: vscode.ExtensionContext) {
 	}
 
 	// override VS Code's default implementation of the debug hover
-	const provideEvaluatableExpression = {
+	/*const provideEvaluatableExpression = {
 		provideEvaluatableExpression(document: vscode.TextDocument, position: vscode.Position): vscode.ProviderResult<vscode.EvaluatableExpression> {
 			const wordRange = document.getWordRangeAtPosition(position)
 			return wordRange ? new vscode.EvaluatableExpression(wordRange) : undefined;
 		}
 	};
 	vscode.languages.registerEvaluatableExpressionProvider('plsql', provideEvaluatableExpression);
-	vscode.languages.registerEvaluatableExpressionProvider('oraclesql', provideEvaluatableExpression);
+	vscode.languages.registerEvaluatableExpressionProvider('oraclesql', provideEvaluatableExpression);*/
 }
 
 export function deactivate() {

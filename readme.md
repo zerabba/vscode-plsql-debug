@@ -107,11 +107,5 @@ What would be great to implement:
 - [x] Watchers
 - [x] On over evaluation
 - [ ] For the moment, I ask the user for the source file with quick open when I don't know where the file is. Maybe it would be better to have a connection to the DB and retreive the source code?
-- [ ] Find a way to evaluate more than the variables, maybe to be able to make a select [EVALUATION] from dual (with jdwp, we can invoke a method).
+- [x] Find a way to evaluate more than the variables, maybe to be able to make a select [EVALUATION] from dual (with jdwp, we can invoke a method).
 - [ ] Data breakpoint
-
-## Donate
-
-If you find this extension usefull and like it, you can make a donation to [MSF](https://www.msf.org/) and help them to fight the Covid-19. Thanks for your help and happy coding :-)
-
-File written with Emacs and pushed with magit :stuck_out_tongue_winking_eye:

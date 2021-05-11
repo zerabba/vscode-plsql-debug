@@ -1,3 +1,7 @@
+## 1.0.8
+* Comment debug hover, seems better the default one
+* update from debendabot
+
 ## 1.0.7
 * Debug is now also working with oraclesql type
 * We can now evaluate some other things than just variables, for that we need to be in a java context (jvm).
