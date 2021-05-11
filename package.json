@@ -54,7 +54,7 @@
 		"tslint": "6.1.0",
 		"typescript": "3.8.3",
 		"vsce": "1.74.0",
-		"vscode": "1.1.36",
+		"vscode": "1.1.37",
 		"vscode-debugadapter-testsupport": "1.40.3"
 	},
 	"main": "./out/extension",
